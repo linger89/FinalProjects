@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{%- block styles %}
+{{ super() }}
+{% endblock %}
+
+
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+
+{% block content %}
+{% if  statisticname  ==  'Mean Earning after 10 Years' %}
+{% set files = [['figure/10_year_mean_earnings_family_income.svg','Family Income Brackets'],['figure/10_year_mean_earnings_gender.svg','Gender'],['figure/10_year_mean_earnings_independence.svg','Dependence']] %}
+{% elif statisticname ==  'Median Cumulative Debt' %}
+{% set files = [['figure/cumulative_median_debt_by_family_income.svg','Family Income Brackets'],['figure/cumulative_median_debt_by_gender.svg','Gender'],['figure/cumulative_median_debt_by_dependence.svg','Dependence']] %}
+{% elif statisticname ==  'Enrollment Rate 2013' %}
+{% set files = [['figure/enrollment_rate_by_race_2013.svg','Race']] %}
+{% elif statisticname ==  'Top 20 Schools by SAT Score 2013' %}
+{% set files = [['figure/Top20SATMATH2013.svg','Math'],['figure/Top20SATWRITING2013.svg',"Writing"],['figure/Top20SATVERBAL2013.svg','Verbal']] %}
+{% endif %}
+
+<div class="container-fluid">
+    {% for fileinfo in files %}
+    <div class="row-fluid">
+      <div class="col-sm-12">
+        <div class="row-fluid">
+            <div class="chart-wrapper">
+              <div class="chart-title">
+               {{ fileinfo[1] }}
+              </div>
+              <div class="chart-stage">
+                <div class="customfigure">
+				<img class="img-responsive" src="{{ url_for('static', filename=fileinfo[0])}}" title="{{ statisticname }}">
+				</div>
+              </div>
+            </div>
+       </div>
+     </div>
+    </div>
+ {% endfor %}
+</div>
+
+
+{% endblock %}

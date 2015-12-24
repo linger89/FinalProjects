@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block content -%}
+  <div class="container-fluid">
+    <div class="row-fluid">
+      <div class="col-sm-6">
+        <div class="row-fluid">
+          <!-- Time Chart -->
+            <div class="chart-wrapper">
+              <div class="chart-title">
+                Average {{ statisticname }}
+              </div>
+              <div class="chart-stage">
+                <div id="time-chart"></div>
+              </div>
+            </div>
+          <!-- Time Chart -->
+     </div>
+         <div class="row-fluid">
+          <div class="col-sm-8">
+           <!-- ControlType -->
+            <div class="chart-wrapper">
+              <div class="chart-title">
+                 Institution Type
+              </div>
+              <div class="chart-stage">
+                <div id="ControlType-bar-chart"></div>
+              </div>
+            </div>
+           <!-- ControlType -->
+         </div>
+         <div class="col-sm-4">
+           <!-- Metric 1 -->
+          <div class="chart-wrapper">
+           <div class="chart-title">
+             Average {{ statisticname }} Over the Years
+           </div>
+           <div class="chart-stage">
+             <div id="aaroveryears"></div>
+           </div>
+          </div>
+          <!-- Metric 1 -->
+          <!-- Metric 2 -->
+         <div class="chart-wrapper">
+          <div class="chart-title">
+            Number of Schools Counted
+            <a href="javascript:dc.filterAll(); dc.renderAll();"> Reset All</a>
+          </div>
+          <div class="chart-stage">
+            <div id="numberofschool"></div>
+          </div>
+         </div>
+         <!-- Metric 2 -->
+         </div>
+         </div>
+      </div>
+      <!-- Map -->
+      <div class="col-sm-6">
+        <div class="chart-wrapper">
+          <div class="chart-title">
+            County Distribution of Average {{ statisticname }}
+          </div>
+          <div class="chart-stage">
+            <div id="us-chart"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Map -->
+    </div>
+{%- endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type='text/javascript'>
+
+queue()
+    .defer(d3.json, "{{ url_for('static', filename='geojson/us-counties-20m.json')}}")
+    .await(makeGraphs);
+
+function makeGraphs(error, countiesJson) {
+	var averageadmissionprojects = JSON.parse({{ json_file|tojson|safe }});
+    var countyarray=new Object();
+	averageadmissionprojects.forEach(function(d) {
+		d["Year"] = d3.time.format("%Y").parse(d["Year"].toString());
+        countyarray[d["Gid"]]=[d["county"],d["state"]];
+	});
+
+	var ndx = crossfilter(averageadmissionprojects);
+	var dateDim = ndx.dimension(function(d) { return d["Year"]; });
+	var countyDim = ndx.dimension(function(d) { return d["Gid"]; });
+    var controlDim = ndx.dimension(function(d) { return d["controltype"]; });
+
+    function reduceAddAvg(attr_avg,attr_count) {
+        return function(p,v) {
+                p.sum += v[attr_avg]*v[attr_count];
+                p.count += v[attr_count];
+                if (p.count>0){
+                    p.avg = p.sum/p.count;}
+                else {p.avg=0;}
+            return p;
+        };
+    }
+    function reduceRemoveAvg(attr_avg,attr_count) {
+        return function(p,v) {
+                p.sum -= v[attr_avg]*v[attr_count];
+                p.count -= v[attr_count];
+                if (p.count>0){
+                    p.avg = p.sum/p.count;}
+                else {p.avg=0;}
+            return p;
+        };
+    }
+    function reduceInitAvg() {
+        return {count:0, sum:0, avg:0};
+    }
+    function orderValue(p) {
+        return p.avg;
+    }
+    function reverseorderValue(p) {
+        return -p.avg;
+    }
+
+	var averageadmissionrateByDate = dateDim.group().reduce(reduceAddAvg('{{dbname}}','count'), reduceRemoveAvg('{{dbname}}','count'), reduceInitAvg);
+	var averageadmissionrateByCounty = countyDim.group().reduce(reduceAddAvg('{{dbname}}','count'), reduceRemoveAvg('{{dbname}}','count'), reduceInitAvg);
+    var averageadmissionrateByControlType = controlDim.group().reduce(reduceAddAvg('{{dbname}}','count'), reduceRemoveAvg('{{dbname}}','count'), reduceInitAvg);
+	var averageadmissionrate = ndx.groupAll().reduce(reduceAddAvg('{{dbname}}','count'), reduceRemoveAvg('{{dbname}}','count'), reduceInitAvg);
+	var max_county = averageadmissionrateByCounty.order(orderValue).top(1)[0].value.avg;
+    var min_county = averageadmissionrateByCounty.order(reverseorderValue).top(1)[0].value.avg;
+    console.log(max_county);
+    console.log(min_county);
+
+	//Define values (to be used in charts)
+	var minDate = dateDim.bottom(1)[0]["Year"];
+	var maxDate = dateDim.top(1)[0]["Year"];
+
+    //Charts
+	var timeChart = dc.barChart("#time-chart");
+	var usChart = dc.geoChoroplethChart("#us-chart");
+	var averageadmissionrateND = dc.numberDisplay("#aaroveryears");
+    var countschoolND = dc.numberDisplay("#numberofschool");
+    var controlTypeChart = dc.rowChart("#ControlType-bar-chart");
+
+    countschoolND
+    .formatNumber(d3.format("d"))
+    .group(averageadmissionrate)
+    .valueAccessor(function (p){return p.count;});
+
+    averageadmissionrateND
+    .formatNumber(d3.format("0.4f"))
+    .group(averageadmissionrate)
+    .valueAccessor(function (p){return p.avg;});
+
+    timeChart
+    .width(600)
+    .height(160)
+    .margins({top: 10, right: 50, bottom: 30, left: 50})
+    .dimension(dateDim)
+    .group(averageadmissionrateByDate)
+    .valueAccessor(function (p){return p.value.avg;})
+    .transitionDuration(500)
+    .x(d3.time.scale().domain([minDate, maxDate]))
+    .elasticY(true)
+    .xAxisLabel("Year")
+    .yAxis().ticks(4);
+
+    controlTypeChart
+    .width(380)
+    .height(130).gap(5).elasticX(true)
+    .dimension(controlDim).valueAccessor(function (p){return p.value.avg;})
+    .colors(colorbrewer.Set1[3]).labelOffsetY(15)
+    .group(averageadmissionrateByControlType).xAxis().ticks(5);
+
+    usChart.width(1100)
+    .height(350)
+    .dimension(countyDim)
+    .group(averageadmissionrateByCounty)
+    .colors(colorbrewer.YlGn[9])
+    .colorDomain([min_county, max_county])
+    .overlayGeoJson(countiesJson["features"], "countygid", function (d) {
+    		return d.properties.GEO_ID;
+    })
+    .valueAccessor(function (p){return p.value.avg;})
+    .projection(d3.geo.albersUsa()
+        				.scale(600)
+        				.translate([340, 150]))
+    .title(function (p) {
+                if (countyarray.hasOwnProperty(p["key"])){
+                    return "County: " + countyarray[p["key"]][0] + "\n" + "State: " + countyarray[p["key"]][1]
+        					+ "\n"
+        					+ "{{ statisticname }}: " + d3.format('.4f')(p["value"]);
+                }
+    });
+
+
+    dc.renderAll();
+
+};
+
+
+</script>
+{% endblock %}

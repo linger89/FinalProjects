@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% macro render_field(field) %}
+  <dt>{{ field.label }}
+  <dd>{{ field(**kwargs)|safe }}
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  </dd>
+{% endmacro %}
+
+{%- block styles %}
+{{ super() }}
+{% endblock %}
+
+
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row-fluid">
+      <div class="col-sm-12">
+        <div class="row-fluid">
+            <div class="chart-wrapper">
+              <div class="chart-title">
+                Which school are you interested in?
+              </div>
+              <div class="chart-stage">
+                  {% if error %}
+                  <p class=error><strong>Error:</strong> {{ error }}
+                  {% endif %}
+                  <form method=post action="/schoollevelexploration/Find%20Similar%20Schools">
+                      <dl>
+                          {{ render_field(form.username) }}
+                      </dl>
+                  <p><input type=submit value=Submit>
+                  </form>
+              </div>
+            </div>
+       </div>
+     </div>
+    </div>
+<div>
+
+{% endblock %}

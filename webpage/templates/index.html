@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+ <h2>Basic Summary</h2>
+  <p>Basic statistics of colleges</p>
+  <div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Explore
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu">
+      <li><a href="/basicsummary/Enrollment Rate 2013">Enrollment Rate 2013</a></li>
+      <li><a href="/basicsummary/Top 20 Schools by SAT Score 2013">Top 20 Schools by SAT Score 2013</a></li>
+      <li><a href="/basicsummary/Median Cumulative Debt">Median Cumulative Debt</a></li>
+      <li><a href="/basicsummary/Mean Earning after 10 Years">Mean Earning after 10 Years</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="container">
+ <h2>County-Level Summary</h2>
+  <p>Statistics of colleges broken down by county, year and control type</p>
+  <div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Explore
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu">
+      <li><a href="/countylevelexploration/Admission Rate">Admission Rate</a></li>
+      <li><a href="/countylevelexploration/Number of Students">Number of Students</a></li>
+      <li><a href="/countylevelexploration/Faculty Salary">Faculty Salary</a></li>
+      <li><a href="/countylevelexploration/Percentage of Students Receiving Federal Loans">Percentage of Students Receiving Federal Loans</a></li>
+      <li><a href="/countylevelexploration/Federal Loan Payment Rate">Federal Loan Payment Rate</a></li>
+      <li><a href="/countylevelexploration/Median Cumulative Debt">Median Cumulative Debt</a></li>
+      <li><a href="/countylevelexploration/Mean Earning after 6 Years">Mean Earning after 6 Years</a></li>
+    </ul>
+  </div>
+</div>
+
+
+<div class="container">
+ <h2>School-Level Summary</h2>
+  <p>Predictions on the school level</p>
+  <div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Features
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu">
+      <li><a href="/schoollevelexploration/Find Similar Schools">Find Similar Schools</a></li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
